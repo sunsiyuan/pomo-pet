@@ -16,7 +16,9 @@ uint32_t restSeconds();
 uint32_t remaining = PRESETS[0].focus, lastTick = 0, celebrationAt = 0, lastActive = 0;
 uint32_t total = 0, today = 0, todayKey = 0;
 uint8_t roundCount = 0, propStart = 0;  // propStart: random first prop per session.
-constexpr int BRIGHT = 80, DIM = 30;  // M5StickCPlus 0.1.1 brightness scale is 0-100.
+// M5StickCPlus 0.1.1 maps 0-100 onto LDO2 2.5-3.2 V in 100 mV steps, so only
+// ~7 levels are real: 29 -> 2.7 V, 15 -> 2.6 V (better on camera), 0 -> 2.5 V (floor).
+constexpr int BRIGHT = 29, DIM = 0;
 constexpr uint32_t DIM_AFTER_MS = 30000;
 // IMU axes as mounted: +Z out of the screen, X across the screen width.
 constexpr float FACE_SIGN = 1.0f, TILT_SIGN = -1.0f;
