@@ -4,6 +4,8 @@ An offline pomodoro desk pet for the **M5StickC Plus 1.1**. A little pixel
 companion works alongside you — typing on a laptop, reading, taking notes —
 naps with you on breaks, and celebrates every finished tomato.
 
+<img src="preview/demo.gif" alt="pomo-pet running on an M5StickC Plus" width="300">
+
 ![Ready, focus, rest, and celebration states](preview/states.png)
 
 No Wi-Fi, no Bluetooth, no companion app. Flash it and put it on your desk.
