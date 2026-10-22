@@ -15,7 +15,7 @@ const Preset& P() { return PRESETS[preset]; }
 uint32_t restSeconds();
 uint32_t remaining = PRESETS[0].focus, lastTick = 0, celebrationAt = 0, lastActive = 0;
 uint32_t total = 0, today = 0, todayKey = 0;
-uint8_t roundCount = 0;
+uint8_t roundCount = 0, propStart = 0;  // propStart: random first prop per session.
 constexpr int BRIGHT = 80, DIM = 30;  // M5StickCPlus 0.1.1 brightness scale is 0-100.
 constexpr uint32_t DIM_AFTER_MS = 30000;
 // IMU axes as mounted: +Z out of the screen, X across the screen width.
@@ -97,6 +97,7 @@ void saveState() {
   prefs.putUChar("mode", mode);
   prefs.putUInt("remain", remaining);
   prefs.putUChar("round", roundCount);
+  prefs.putUChar("prop", propStart);
 }
 void wake(uint32_t now) {
   lastActive = now;
@@ -158,8 +159,8 @@ void pet(uint32_t now) {
   screen.fillRoundRect(32 + slide, 142, 72, 4, 2, SOFT);
   chr().draw({ox, oy, look, sleeping, happy, now % 5300 > 5120});
   if (mode == FOCUS) {
-    // Rotate every 45 focused seconds; pauses keep the current prop.
-    uint8_t activity = (total + (P().focus - remaining) / 45) % 3;
+    // Rotate every 5 focused minutes from a random first prop; pauses keep it.
+    uint8_t activity = (propStart + (P().focus - remaining) / 300) % 3;
     uint32_t motion = paused ? 0 : now;
     if (activity == 0) {
       screen.fillRect(44, 119, 49, 28, 0xA4B2);
@@ -253,8 +254,10 @@ uint32_t restSeconds() {
   return roundCount >= P().rounds ? P().longRest : P().shortRest;
 }
 void startOrToggle(uint32_t now) {
-  if (mode == READY) { mode = FOCUS; paused = false; lastTick = now; play(TUNE_START); }
-  else if (mode != CELEBRATE) {
+  if (mode == READY) {
+    mode = FOCUS; paused = false; lastTick = now; propStart = esp_random() % 3;
+    play(TUNE_START);
+  } else if (mode != CELEBRATE) {
     paused = !paused; lastTick = now;
     if (paused) play(TUNE_PAUSE); else play(TUNE_START);
   }
@@ -302,6 +305,7 @@ void setup() {
   refreshDay();
   if (!dateKey()) todayKey = 0;  // Clock unknown: show the all-time count only.
   roundCount = prefs.getUChar("round", 0);
+  propStart = prefs.getUChar("prop", 0) % 3;
   mode = (Mode)prefs.getUChar("mode", READY);
   remaining = prefs.getUInt("remain", P().focus);
   if (mode == CELEBRATE) { mode = REST; remaining = restSeconds(); }
