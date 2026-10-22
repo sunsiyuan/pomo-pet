@@ -4,7 +4,9 @@ An offline pomodoro desk pet for the **M5StickC Plus 1.1**. A little pixel
 companion works alongside you — typing on a laptop, reading, taking notes —
 naps with you on breaks, and celebrates every finished tomato.
 
-<img src="preview/demo.gif" alt="pomo-pet running on an M5StickC Plus" width="300">
+<img src="preview/demo.gif" alt="Flip to focus: lay the stick face down and the timer starts" width="300">
+
+*Flip to focus: face down starts the timer, face up pauses it.*
 
 ![Ready, focus, rest, and celebration states](preview/states.png)
 
