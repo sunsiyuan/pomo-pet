@@ -1,0 +1,11 @@
+.pio/
+.venv/
+backups/
+
+# Personal fan skins (third-party IP) stay local; the build works without them.
+src/chars/*
+!src/chars/clawd.h
+
+# Old screenshots; README uses preview/states.png only.
+preview/*.png
+!preview/states.png

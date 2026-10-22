@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Clawd · 一起专注</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3efe8;color:#373831;font:15px system-ui,-apple-system,sans-serif}main{max-width:1040px;margin:0 auto;padding:64px 40px;display:grid;grid-template-columns:1fr 360px;gap:80px;align-items:center;min-height:100vh}.eyebrow{font:11px monospace;letter-spacing:3px;color:#847767}h1{font-size:46px;letter-spacing:-2px;font-weight:550;margin:24px 0}p{color:#81796d;line-height:1.9;max-width:390px}.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:30px 0 20px}button{cursor:pointer;font:inherit;border:1px solid #dcd6cb;color:#5d584e;background:transparent;border-radius:30px;padding:10px 15px}button.active{background:#d77b5d;border-color:#d77b5d;color:white}.notes{font-size:12px;color:#948879;margin-top:28px;line-height:2}.device{margin:auto;width:326px;padding:22px 27px 20px;border-radius:32px;background:#db6947;box-shadow:0 20px 40px #6c463825,inset 0 2px 1px #fba784,inset 0 -5px 2px #b3452e}.bezel{background:#242522;padding:14px 10px 12px;border-radius:14px}.brand{font:9px monospace;letter-spacing:2px;color:#93938b;text-align:center;padding-bottom:9px}canvas{display:block;width:250px;height:444.44px;image-rendering:pixelated;background:#f5ebd9}.hardware{display:block;width:42px;height:42px;border-radius:50%;border:3px solid #a84630;background:#bd5037;margin:17px auto 1px;color:#f4bd9c;font:10px monospace;padding:0}.caption{text-align:center;color:#a38d7d;font:11px monospace;margin-top:22px}.actions{display:flex;gap:8px}.actions button{font-size:12px}button:focus-visible{outline:3px solid #7c927a;outline-offset:3px}@media(max-width:750px){main{grid-template-columns:1fr;padding:35px 24px;gap:30px}h1{font-size:36px}.device{width:326px}aside{order:-1}p{max-width:100%}}
+</style>
+<main><section><div class="eyebrow">CLAWD / POMODORO</div><h1>你专注，<br>它陪着。</h1><p>一只陶土橙的小机器人，一段只做一件事的时间。<br>一起开工，认真休息，再攒下一颗小番茄。</p><div class="tabs" aria-label="预览状态"><button data-mode="ready" class="active">等你开工</button><button data-mode="focus">专注</button><button data-mode="rest">休息</button><button data-mode="happy">完成啦</button></div><div class="tabs" aria-label="道具预览"><button data-prop="-1" class="active">自动轮换</button><button data-prop="0">电脑</button><button data-prop="1">书本</button><button data-prop="2">笔记</button></div><div class="actions"><button id="pause">开始 / 暂停</button><button id="reset">重置</button></div><div class="notes">M5StickC Plus 1.1 · 135 × 240 实际屏幕比例<br>50 分钟专注 / 10 分钟休息 / 两轮后休息 20 分钟（待机时长按 B 切换 25/5，四轮后休息 15）<br>道具每 45 秒自动轮换：电脑、书本、笔记<br>A 键开始、暂停 · 长按 A 重置 · B 键切换提示音（静音时左上角显示）<br>右上角电量四格，插 USB 时格子变绿循环充电 · 30 秒无操作自动调暗<br>此页为设备界面的动画与交互预览。</div></section><aside><div class="device"><div class="bezel"><div class="brand">M5STACK / STICKC PLUS</div><canvas id="screen" width="135" height="240" aria-label="Clawd 番茄钟预览"></canvas></div><button class="hardware" id="physical" aria-label="设备 A 键">M5</button></div><div class="caption">STANDALONE COMPANION · OFFLINE</div></aside></main>
+<script>
+const canvas=document.querySelector('canvas'),c=canvas.getContext('2d');
+const BG='#f5ebd9',INK='#343830',CLAY='#de886d',SHADE='#c8755b',SOFT='#e3d9c7',GREEN='#78947b';
+const FOCUS_SECONDS=3000,SHORT_REST_SECONDS=600,LONG_REST_SECONDS=1200,ROUNDS_PER_SET=2;
+let propOverride=-1;const HAND=()=>CLAY;
+let mode='ready',paused=false,remaining=FOCUS_SECONDS,total=0,today=0,round=0,lastTick=performance.now(),happyAt=0;
+function setMode(m){mode=m;paused=false;remaining=m==='rest'?SHORT_REST_SECONDS:m==='happy'?0:FOCUS_SECONDS;lastTick=performance.now();happyAt=lastTick;document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===m))}
+document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
+function toggle(){if(mode==='ready')setMode('focus');else if(mode!=='happy'){paused=!paused;lastTick=performance.now()}}
+document.querySelectorAll('[data-prop]').forEach(b=>b.onclick=()=>{propOverride=Number(b.dataset.prop);if(mode!=='focus')setMode('focus');document.querySelectorAll('[data-prop]').forEach(x=>x.classList.toggle('active',x===b))});
+const q=new URLSearchParams(location.search);if(q.has('mode'))setTimeout(()=>setMode(q.get('mode')));if(q.has('prop'))propOverride=Number(q.get('prop'));
+document.querySelector('#pause').onclick=toggle;document.querySelector('#physical').onclick=toggle;document.querySelector('#reset').onclick=()=>setMode('ready');
+function rect(x,y,w,h,col){c.fillStyle=col;c.fillRect(Math.round(x),Math.round(y),w,h)}
+function text(s,y,size=8,col=INK){c.fillStyle=col;c.font=size+'px monospace';c.textAlign='center';c.textBaseline='top';c.fillText(s,67,y)}
+function frame(now){
+if((mode==='focus'||mode==='rest')&&!paused&&now-lastTick>=1000){let e=Math.floor((now-lastTick)/1000);remaining=Math.max(0,remaining-e);lastTick+=e*1000;if(!remaining){if(mode==='focus'){total++;today++;round++;setMode('happy')}else{if(round>=ROUNDS_PER_SET)round=0;setMode('ready')}}}
+if(mode==='happy'&&now-happyAt>=6000){setMode('rest');remaining=round>=ROUNDS_PER_SET?LONG_REST_SECONDS:SHORT_REST_SECONDS}
+rect(0,0,135,240,BG);text('CLAWD / POMO',9,7);rect(12,27,111,1,SOFT);
+{const tri=(pts,col)=>{c.fillStyle=col;c.beginPath();c.moveTo(pts[0],pts[1]);c.lineTo(pts[2],pts[3]);c.lineTo(pts[4],pts[5]);c.fill()};
+c.strokeStyle=INK;c.lineWidth=1;c.strokeRect(107.5,8.5,17,8);rect(125,10,2,5,INK);for(let i=0;i<3;i++)rect(109+i*4,10,3,5,INK);
+if(mode==='rest'){rect(9,10,3,5,INK);tri([11,12,16,7,16,17],INK);c.strokeStyle=CLAY;c.beginPath();c.moveTo(8,17);c.lineTo(19,6);c.stroke()}}
+
+text(mode==='ready'?"let's focus":mode==='focus'?(paused?'take your time':'one thing at a time'):mode==='rest'?(paused?'rest paused':'a little rest'):'you did it!',37,7);
+const happy=mode==='happy',sleep=mode==='rest',ox=15,oy=78+(happy?-Math.abs(Math.floor(now/60)%12-6):(!sleep&&Math.floor(now/700)%2?1:0));
+rect(32,142,72,4,SOFT);const p=(x,y,w,h,col=CLAY)=>rect(ox+x*7,oy+y*7,w*7,h*7,col);
+p(2,0,11,7);p(2,6,11,1,SHADE);p(0,happy?1:3,2,2);p(13,happy?1:3,2,2);[3,5,9,11].forEach(x=>p(x,7,1,2));
+if(sleep||now%5300>5120){rect(ox+28,oy+25,10,3,INK);rect(ox+70,oy+25,10,3,INK)}else if(happy){[ox+28,ox+70].forEach(x=>{rect(x,oy+18,7,3,INK);rect(x-3,oy+21,3,5,INK);rect(x+7,oy+21,3,5,INK)})}else{rect(ox+28,oy+14,7,14,INK);rect(ox+70,oy+14,7,14,INK)}
+if(mode==='focus'){
+const activity=propOverride>=0?propOverride:(total+Math.floor((FOCUS_SECONDS-remaining)/45))%3,motion=paused?0:now;
+if(activity===0){rect(44,119,49,28,'#a5a594');rect(47,122,43,20,'#ced0bb');rect(39,147,59,4,'#7d7a70');rect(64,129,8,5,SOFT);rect(Math.floor(motion/180)%2?39:92,135,7,5,HAND())}
+else if(activity===1){rect(37,121,62,31,GREEN);rect(40,118,26,30,'#fff1d9');rect(69,118,27,30,'#fff1d9');rect(66,119,3,31,'#b4b9a4');[125,131,137].forEach(y=>{rect(44,y,17,2,'#c8c6bd');rect(74,y,17,2,'#c8c6bd')});if(Math.floor(motion/600)%12===11){c.fillStyle=SOFT;c.beginPath();c.moveTo(68,118);c.lineTo(88,113);c.lineTo(68,148);c.fill()}rect(33,134,8,7,HAND());rect(95,134,8,7,HAND())}
+else{rect(43,120,48,32,GREEN);rect(47,117,40,32,'#fff1d9');[123,130,137,144].forEach(y=>{rect(44,y,5,2,INK);rect(53,y,27,1,SOFT)});let dx=(Math.floor(motion/250)%4)*2;rect(54,127,12+dx,2,INK);for(let i=0;i<5;i++)rect(66+dx+i*2,126-i*2,4,4,'#e7b34c');rect(64+dx,135,7,5,HAND());rect(36,136,10,6,HAND())}
+}
+if(sleep)text(Math.floor(now/850)%2?'z z':'z',56,9,GREEN);
+if(happy)for(let i=0;i<8;i++)rect((i*41+7)%125,48+(Math.floor(now/50)+i*19)%100,3,4,i%2?CLAY:GREEN);
+text(String(Math.floor(remaining/60)).padStart(2,'0')+':'+String(remaining%60).padStart(2,'0'),162,26);
+for(let i=0;i<ROUNDS_PER_SET;i++){c.fillStyle=i<round?CLAY:SOFT;c.beginPath();c.arc(67-(ROUNDS_PER_SET-1)*7+i*14,202,3,0,Math.PI*2);c.fill()}
+text(today+' today / '+total+' all',212,7);text(mode!=='ready'?'A pause / hold reset':Math.floor(now/3000)%2?'hold B: 25 or 50':'A start / B sound',229,6);
+requestAnimationFrame(frame)}requestAnimationFrame(frame);
+</script></html>
